@@ -40,3 +40,25 @@ def create_table():
 
     cursor.close()
     db.close()
+
+def reset_auto_increment():
+    db = None
+    cursor = None
+    try:
+        db = connect_database()
+        cursor = db.cursor()
+        
+        # Reset AUTO_INCREMENT to 1
+        cursor.execute("ALTER TABLE students AUTO_INCREMENT = 1")
+        db.commit()
+        print("✓ AUTO_INCREMENT reset to 1 successfully!")
+        
+    except mysql.connector.Error as e:
+        print(f"✗ Database error: {e}")
+    except Exception as e:
+        print(f"✗ Error: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()

@@ -37,17 +37,19 @@ def menu():
 
         elif choice == "2":
             students = crud.view_student()
-            
+
             if not students:
                 print(Fore.YELLOW + "\n⚠ No students found in the database.")
+                print(Fore.CYAN + "Automatically resetting ID counter to 1...")
+                database.reset_auto_increment()
             else:
                 print("\n" + Fore.CYAN + "="*70)
                 print(Fore.CYAN + f"{'ID':<5} {'Name':<20} {'Age':<5} {'Grade':<7} {'Email':<30}")
                 print(Fore.CYAN + "-"*70)
-                
+
                 for s in students:
                     print(Fore.WHITE + f"{s['id']:<5} {s['name']:<20} {s['age']:<5} {s['grade']:<7} {s['email']:<30}")
-                
+
                 print(Fore.CYAN + "="*70)
                 print(Fore.GREEN + f"Total Students: {len(students)}")
 
@@ -76,6 +78,11 @@ def menu():
                     print(Fore.RED + "✗ Student with ID not found")
                 else:
                     print(Fore.GREEN + "✓ Student Deleted Successfully.")
+
+                    students = crud.view_student()
+                    if not students:
+                        print(Fore.YELLOW + "\n⚠ Table is now empty. Resetting ID counter...")
+                        database.reset_auto_increment()
             else:
                 print(Fore.YELLOW + "Delete operation cancelled.")
 
