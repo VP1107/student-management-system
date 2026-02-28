@@ -1,0 +1,22 @@
+# Environment variables (NEVER upload passwords!)
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database files (optional)
+*.db
+*.sqlite
