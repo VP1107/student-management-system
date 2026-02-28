@@ -62,7 +62,7 @@ Before running this project, make sure you have:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/student-management-system.git
+git clone https://github.com/VP1107/student-management-system.git
 cd student-management-system
 ```
 
@@ -194,9 +194,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **Your Name**
 
-- GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- Portfolio: [Your Website](https://yourwebsite.com)
+- GitHub: [VP1107](https://github.com/VP1107)
+- LinkedIn: [Vatsal Pandya](linkedin.com/in/vatsal-pandya-30a946274)
+- Portfolio: [My Website](https://vp1107.github.io/My_Resume/)
 
 ## 🙏 Acknowledgments
 
