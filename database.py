@@ -1,64 +1,11 @@
-import mysql.connector
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
-def connect_database():
-    db_host = os.getenv("DB_HOST")
-    db_user = os.getenv("DB_USER")
-    db_password = os.getenv("DB_PASSWORD")
-    db_database = os.getenv("DB_NAME")
-    
-    if not all([db_host, db_database, db_password, db_user]):
-        raise ValueError("One or More Environment Variables are Missing")
-    
-    mydb = mysql.connector.connect(
-        host = db_host,
-        user = db_user,
-        password = db_password,
-        database = db_database,
-    )
-    return mydb
-
-
-def create_table():
-    db = connect_database()
-    cursor = db.cursor()
-    query = """
-    CREATE TABLE IF NOT EXISTS students(
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(50) NOT NULL,
-        age INT NOT NULL,
-        grade VARCHAR(1),
-        email VARCHAR(50) UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """
-
-    cursor.execute(query)
-
-    cursor.close()
-    db.close()
-
-def reset_auto_increment():
-    db = None
-    cursor = None
-    try:
-        db = connect_database()
-        cursor = db.cursor()
-        
-        # Reset AUTO_INCREMENT to 1
-        cursor.execute("ALTER TABLE students AUTO_INCREMENT = 1")
-        db.commit()
-        print("✓ AUTO_INCREMENT reset to 1 successfully!")
-        
-    except mysql.connector.Error as e:
-        print(f"✗ Database error: {e}")
-    except Exception as e:
-        print(f"✗ Error: {e}")
-    finally:
-        if cursor:
-            cursor.close()
-        if db:
-            db.close()
+db_url = os.getenv("DATABASE_URL")
+engine = create_engine(db_url)
+session = sessionmaker(bind=engine, autoflush=False, autocommit=False)

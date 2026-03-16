@@ -1,106 +1,64 @@
-import mysql.connector
-import database 
-import crud
-from colorama import Fore, Style, init
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
+import database
+import schema
+import model
 
-init(autoreset=True)
+app = FastAPI()
 
-
-def menu():
-    while True:
-        print("\n" + Fore.CYAN + "="*70)
-        print(Fore.CYAN + "          🎓 STUDENT MANAGEMENT SYSTEM 🎓")
-        print(Fore.CYAN + "="*70)
-        print(Fore.YELLOW + "1. ➕ ADD STUDENTS")
-        print(Fore.YELLOW + "2. 👀 VIEW STUDENTS")
-        print(Fore.YELLOW + "3. ✏️  UPDATE GRADES")
-        print(Fore.YELLOW + "4. 🗑️  DELETE STUDENTS")
-        print(Fore.YELLOW + "5. 🚪 EXIT")
-        print(Fore.CYAN + "-"*70)
-
-        choice = input(Fore.WHITE + "Enter choice: ")
-    
-        if choice == "1":
-            print(Fore.CYAN + "\n--- Add New Student ---")
-            name = input("Enter the Name: ")
-            age = input("Enter the Age: ")
-            grade = input("Enter the grade: ")
-            email = input("Enter the email: ")
-
-            result = crud.add_student(name, age, grade, email)
-
-            if result == 0:
-                print(Fore.RED + "✗ Insert Failed")
-            else:
-                print(Fore.GREEN + "✓ Student added Successfully")
-        
-
-        elif choice == "2":
-            students = crud.view_student()
-
-            if not students:
-                print(Fore.YELLOW + "\n⚠ No students found in the database.")
-                print(Fore.CYAN + "Automatically resetting ID counter to 1...")
-                database.reset_auto_increment()
-            else:
-                print("\n" + Fore.CYAN + "="*70)
-                print(Fore.CYAN + f"{'ID':<5} {'Name':<20} {'Age':<5} {'Grade':<7} {'Email':<30}")
-                print(Fore.CYAN + "-"*70)
-
-                for s in students:
-                    print(Fore.WHITE + f"{s['id']:<5} {s['name']:<20} {s['age']:<5} {s['grade']:<7} {s['email']:<30}")
-
-                print(Fore.CYAN + "="*70)
-                print(Fore.GREEN + f"Total Students: {len(students)}")
-
-
-        elif choice == "3":
-            print(Fore.CYAN + "\n--- Update Student Grade ---")
-            student_id = input("Enter Student ID: ")
-            new_grade = input("Enter New Grade: ")
-            
-            result = crud.update_student_grade(new_grade, student_id)
-            
-            if result == 0:
-                print(Fore.RED + "✗ Student with ID not found")
-            else:
-                print(Fore.GREEN + "✓ Grade updated Successfully.")        
-
-
-        elif choice == "4":
-            print(Fore.CYAN + "\n--- Delete Student ---")
-            student_id = input("Enter Student ID: ")
-            confirm = input(Fore.YELLOW + f"⚠ Do you want to delete STUDENT with ID: {student_id}? (YES or NO): ").lower()
-            
-            if confirm == "yes":
-                result = crud.delete_student(student_id)
-                if result == 0:
-                    print(Fore.RED + "✗ Student with ID not found")
-                else:
-                    print(Fore.GREEN + "✓ Student Deleted Successfully.")
-
-                    students = crud.view_student()
-                    if not students:
-                        print(Fore.YELLOW + "\n⚠ Table is now empty. Resetting ID counter...")
-                        database.reset_auto_increment()
-            else:
-                print(Fore.YELLOW + "Delete operation cancelled.")
-
-
-        elif choice == "5":
-            print("\n" + Fore.CYAN + "="*70)
-            print(Fore.GREEN + "Thank you for using Student Management System! 👋")
-            print(Fore.CYAN + "Exiting...")
-            print(Fore.CYAN + "="*70)
-            break
-        
-        else:
-            print(Fore.RED + "✗ Invalid choice. Please enter a number between 1-5.")
-
-
-if __name__ == "__main__":
+def get_db():
+    db = database.session()
     try:
-        database.create_table()
-        menu()
-    except Exception as e:
-        print(Fore.RED + f"Fatal error: {e}")
+        yield db
+    finally:
+        db.close()
+
+
+# Add Student
+@app.post('/add_student', response_model=model.StudentCreate)
+def add_student(student: model.StudentCreate, db: Session = Depends(get_db)):
+    db_student = schema.Student(**student.model_dump())
+    if db.query(schema.Student).filter(schema.Student.email == db_student.email).first():
+        raise HTTPException(status_code=400, detail="Email already exists")
+    if db.query(schema.Student).filter(schema.Student.name == db_student.name).first():
+        raise HTTPException(status_code=400, detail="Name already exists")
+    db.add(db_student)
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+    
+# View Students
+@app.get('/view_students', response_model=list[model.Student])
+def view_students(db:Session=Depends(get_db)):
+    if not db.query(schema.Student).first():
+        raise HTTPException(status_code=404, detail="No students found")
+    return db.query(schema.Student).all()
+
+@app.get('/view_students/filter/{student_id}', response_model=list[model.Student])
+def view_student_by_id(student_id: int, db:Session=Depends(get_db)):
+    db_student = db.query(schema.Student).filter(schema.Student.id==student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student Not Found")
+    return db_student
+
+# Update Student Grade
+@app.put('/update_student_grade/{student_id}', response_model=model.Student)
+def update_student_grade(new_grade: str, student_id: int, db: Session = Depends(get_db)):
+    db_student = db.query(schema.Student).filter(schema.Student.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    db_student.grade = new_grade
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+
+# Delete Student
+@app.delete('/delete_student/{student_id}')
+def delete_student(student_id:int, db:Session=Depends(get_db)):
+    db_student = db.query(schema.Student).filter(schema.Student.id==student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="No students found")
+    db.delete(db_student)
+    db.commit()
+    return "Student Deleted"

@@ -7,16 +7,4 @@ __pycache__/
 *.pyo
 *.pyd
 
-# IDE/Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Database files (optional)
-*.db
-*.sqlite
+myenv/
