@@ -1,7 +1,12 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import DeclarativeBase
 
-class Student(DeclarativeBase):
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Student(Base):
     __tablename__ = 'students'
 
     id = Column(Integer, primary_key=True, index=True)
